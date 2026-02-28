@@ -51,10 +51,6 @@ usage() {
 
 # Update: pull latest markitdown submodule, rebuild image, reinstall
 do_update() {
-    printf "%b═══════════════════════════════════════════%b\n" "${BLUE}" "${NC}"
-    printf "%bMarkItDown Update%b\n" "${GREEN}" "${NC}"
-    printf "%b═══════════════════════════════════════════%b\n" "${BLUE}" "${NC}"
-
     if [ ! -d "${MARKITDOWN_REPO_PATH}/.git" ]; then
         printf "%bError: repo not found at %s%b\n" "${RED}" "${MARKITDOWN_REPO_PATH}" "${NC}"
         printf "%bRe-install with: ./install.sh%b\n" "${YELLOW}" "${NC}"
@@ -65,15 +61,21 @@ do_update() {
     git -C "${MARKITDOWN_REPO_PATH}" pull
 
     printf "%bUpdating markitdown submodule to latest upstream...%b\n" "${YELLOW}" "${NC}"
+    SUBMODULE_BEFORE=$(git -C "${MARKITDOWN_REPO_PATH}" rev-parse HEAD:markitdown 2>/dev/null || echo "")
     git -C "${MARKITDOWN_REPO_PATH}" submodule update --remote markitdown
+    SUBMODULE_AFTER=$(git -C "${MARKITDOWN_REPO_PATH}" rev-parse HEAD:markitdown 2>/dev/null || echo "")
 
-    printf "%bBuilding Docker image markitdown:latest...%b\n" "${YELLOW}" "${NC}"
-    docker build -t markitdown:latest "${MARKITDOWN_REPO_PATH}/markitdown"
+    if [ "$SUBMODULE_BEFORE" = "$SUBMODULE_AFTER" ] && [ -n "$SUBMODULE_BEFORE" ]; then
+        printf "Upstream is already up to date.\n"
+    else
+        printf "%bBuilding Docker image markitdown:latest...%b\n" "${YELLOW}" "${NC}"
+        docker build -t markitdown:latest "${MARKITDOWN_REPO_PATH}/markitdown"
+    fi
 
     printf "%bReinstalling wrapper...%b\n" "${YELLOW}" "${NC}"
-    "${MARKITDOWN_REPO_PATH}/install.sh"
+    "${MARKITDOWN_REPO_PATH}/install.sh" --quiet
 
-    printf "%bDone! markitdown is up to date.%b\n" "${GREEN}" "${NC}"
+    printf "%bDone!%b\n" "${GREEN}" "${NC}"
 }
 
 # Default values

@@ -21,10 +21,17 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 fi
 
-INSTALL_PATH="${1:-$HOME/.local/bin}"
+QUIET=false
+INSTALL_PATH="$HOME/.local/bin"
+for arg in "$@"; do
+    case "$arg" in
+        --quiet) QUIET=true ;;
+        *) INSTALL_PATH="$arg" ;;
+    esac
+done
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-printf "%bInstalling markitdown-wrapper to %s%b\n" "${BLUE}" "${INSTALL_PATH}" "${NC}"
+[ "$QUIET" = false ] && printf "%bInstalling markitdown-wrapper to %s%b\n" "${BLUE}" "${INSTALL_PATH}" "${NC}"
 
 # Create directory if it doesn't exist
 mkdir -p "$INSTALL_PATH"
@@ -33,20 +40,25 @@ mkdir -p "$INSTALL_PATH"
 sed "s|MARKITDOWN_REPO_PATH=\"\"|MARKITDOWN_REPO_PATH=\"${REPO_DIR}\"|" "${REPO_DIR}/markitdown-wrapper.sh" > "$INSTALL_PATH/markitdown"
 chmod 700 "$INSTALL_PATH/markitdown"
 
-printf "%bInstallation complete!%b\n" "${GREEN}" "${NC}"
-printf "\n"
-printf "You can now use: %bmarkitdown <file>%b\n" "${BLUE}" "${NC}"
-printf "\n"
-printf "%bMake sure %s is in your PATH:%b\n" "${YELLOW}" "${INSTALL_PATH}" "${NC}"
+# Also install as `md` shortcut
+ln -sf "$INSTALL_PATH/markitdown" "$INSTALL_PATH/md"
 
-# Check if in PATH
-if [[ ":$PATH:" == *":${INSTALL_PATH}:"* ]]; then
-    printf "%b%s is already in your PATH%b\n" "${GREEN}" "${INSTALL_PATH}" "${NC}"
-else
-    printf "%bAdd to your shell profile (~/.bashrc, ~/.zshrc, etc.):%b\n" "${YELLOW}" "${NC}"
-    printf "%bexport PATH=\"\$PATH:%s\"%b\n" "${BLUE}" "${INSTALL_PATH}" "${NC}"
+if [ "$QUIET" = false ]; then
+    printf "%bInstallation complete!%b\n" "${GREEN}" "${NC}"
+    printf "\n"
+    printf "You can now use: %bmarkitdown <file>%b  or  %bmd <file>%b\n" "${BLUE}" "${NC}" "${BLUE}" "${NC}"
+    printf "\n"
+    printf "%bMake sure %s is in your PATH:%b\n" "${YELLOW}" "${INSTALL_PATH}" "${NC}"
+
+    # Check if in PATH
+    if [[ ":$PATH:" == *":${INSTALL_PATH}:"* ]]; then
+        printf "%b%s is already in your PATH%b\n" "${GREEN}" "${INSTALL_PATH}" "${NC}"
+    else
+        printf "%bAdd to your shell profile (~/.bashrc, ~/.zshrc, etc.):%b\n" "${YELLOW}" "${NC}"
+        printf "%bexport PATH=\"\$PATH:%s\"%b\n" "${BLUE}" "${INSTALL_PATH}" "${NC}"
+    fi
+
+    printf "\n"
+    printf "%bTest the installation:%b\n" "${YELLOW}" "${NC}"
+    printf "%bmarkitdown --help%b\n" "${BLUE}" "${NC}"
 fi
-
-printf "\n"
-printf "%bTest the installation:%b\n" "${YELLOW}" "${NC}"
-printf "%bmarkitdown --help%b\n" "${BLUE}" "${NC}"

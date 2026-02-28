@@ -30,6 +30,7 @@ Installs to `~/.local/bin/markitdown`. Pass a custom path as the first argument 
 
 ```bash
 markitdown document.pdf           # outputs document.md
+md document.pdf                  # shorter alias, identical behaviour
 markitdown report.docx out.md    # custom output name
 markitdown -v slide.pptx         # verbose (shows docker command)
 markitdown -u                    # update & rebuild (see below)
