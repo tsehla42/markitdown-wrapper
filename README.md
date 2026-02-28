@@ -4,36 +4,54 @@ A convenient wrapper script for converting various document formats to Markdown 
 
 ## Features
 
-✅ **Multi-format Support**
+**Multi-format Support**
 - **Documents**: PDF, DOCX, XLSX, PPTX, RTF, HTML
 - **Images**: PNG, JPG, JPEG, WEBP, GIF, BMP, SVG  
 - **Audio**: MP3, WAV, FLAC, OGG, M4A (extracts transcripts)
 - **Others**: ZIP archives and more
 
-✅ **Convenient Interface**
+**Convenient Interface**
 - Auto-generates output filenames (removes extension, adds `.md`)
 - Smart MIME type detection
 - User-friendly colored output
 - Confirmation before overwriting files
 - Verbose mode for debugging
 
-✅ **Flexible Deployment**
+**Flexible Deployment**
 - Use as shell function for quick tasks
 - Use as installed command (`markitdown`)
 - Docker-based for portability
 
 ## Installation
 
-### Option 1: Install to PATH (Recommended)
+### 1. Clone (with submodule)
+
+The upstream `markitdown` repo is tracked as a git submodule — it adds no weight to this repo.
 
 ```bash
-cd /path/to/markitdown-wrapper
+git clone --recurse-submodules https://github.com/<you>/markitdown-wrapper.git
+cd markitdown-wrapper
+```
+
+If you already cloned without the flag:
+
+```bash
+git submodule update --init
+```
+
+### 2. Build the Docker image
+
+```bash
+docker build -t markitdown:latest markitdown/
+```
+
+### 3. Install the wrapper
+
+```bash
 ./install.sh
 ```
 
-This installs the script to `~/.local/bin/markitdown` by default.
-
-### Option 2: Custom Installation Path
+Installs to `~/.local/bin/markitdown`. Custom path:
 
 ```bash
 ./install.sh /usr/local/bin
@@ -52,9 +70,7 @@ export PATH="$PATH:$HOME/.local/bin"  # Add to ~/.bashrc or ~/.zshrc
 Add to your `~/.bashrc` or `~/.zshrc`:
 
 ```bash
-markitdown() {
-    /path/to/markitdown-wrapper/markitdown-wrapper.sh "$@"
-}
+export PATH="$PATH:$HOME/.local/bin"
 ```
 
 ## Usage
@@ -82,7 +98,22 @@ markitdown podcast.mp3 transcript.md
 -h, --help       Show help message
 -v, --verbose    Show docker command being executed
 --no-clean       Keep temporary files (debug mode)
+-u, --update     Pull latest changes & rebuild Docker image (see Updating below)
 ```
+
+## Updating
+
+```bash
+markitdown -u
+```
+
+This does everything in one command:
+1. `git pull` — latest wrapper changes
+2. `git submodule update --remote` — latest upstream MarkItDown
+3. `docker build -t markitdown:latest` — rebuild the image
+4. `./install.sh` — reinstall the wrapper binary
+
+After that the new Docker image is active for all future conversions.
 
 ### Examples
 

@@ -13,7 +13,13 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to print usage
+# Repo path — replaced with the absolute repo path by install.sh at install time.
+MARKITDOWN_REPO_PATH=""
+if [ -z "$MARKITDOWN_REPO_PATH" ]; then
+    MARKITDOWN_REPO_PATH="$(dirname "$(realpath "$0")")"
+fi
+
+# Usage
 usage() {
     printf "%bmarkitdown-wrapper%b - Convert documents to Markdown using MarkItDown\n\n" "${BLUE}" "${NC}"
     printf "%bUSAGE:%b\n" "${YELLOW}" "${NC}"
@@ -36,10 +42,38 @@ usage() {
     printf "%bOPTIONS:%b\n" "${YELLOW}" "${NC}"
     printf "    -h, --help       Show this help message\n"
     printf "    -v, --verbose    Show docker command being executed\n"
-    printf "    --no-clean       Don't clean up temporary files (debug mode)\n\n"
+    printf "    --no-clean       Don't clean up temporary files (debug mode)\n"
+    printf "    -u, --update     Pull latest upstream, rebuild Docker image, reinstall\n\n"
     printf "%bENVIRONMENT:%b\n" "${YELLOW}" "${NC}"
     printf "    MARKITDOWN_IMAGE  Docker image to use (default: markitdown:latest)\n"
     printf "    MARKITDOWN_TAG    Image tag to use (default: latest)\n"
+}
+
+# Update: pull latest markitdown submodule, rebuild image, reinstall
+do_update() {
+    printf "%b═══════════════════════════════════════════%b\n" "${BLUE}" "${NC}"
+    printf "%bMarkItDown Update%b\n" "${GREEN}" "${NC}"
+    printf "%b═══════════════════════════════════════════%b\n" "${BLUE}" "${NC}"
+
+    if [ ! -d "${MARKITDOWN_REPO_PATH}/.git" ]; then
+        printf "%bError: repo not found at %s%b\n" "${RED}" "${MARKITDOWN_REPO_PATH}" "${NC}"
+        printf "%bRe-install with: ./install.sh%b\n" "${YELLOW}" "${NC}"
+        exit 1
+    fi
+
+    printf "%bPulling latest wrapper changes...%b\n" "${YELLOW}" "${NC}"
+    git -C "${MARKITDOWN_REPO_PATH}" pull
+
+    printf "%bUpdating markitdown submodule to latest upstream...%b\n" "${YELLOW}" "${NC}"
+    git -C "${MARKITDOWN_REPO_PATH}" submodule update --remote markitdown
+
+    printf "%bBuilding Docker image markitdown:latest...%b\n" "${YELLOW}" "${NC}"
+    docker build -t markitdown:latest "${MARKITDOWN_REPO_PATH}/markitdown"
+
+    printf "%bReinstalling wrapper...%b\n" "${YELLOW}" "${NC}"
+    "${MARKITDOWN_REPO_PATH}/install.sh"
+
+    printf "%bDone! markitdown is up to date.%b\n" "${GREEN}" "${NC}"
 }
 
 # Default values
@@ -65,6 +99,10 @@ while [[ $# -gt 0 ]]; do
         --no-clean)
             NO_CLEAN=true
             shift
+            ;;
+        -u|--update)
+            do_update
+            exit 0
             ;;
         -*)
             printf "%bError: Unknown option '$1'%b\n" "${RED}" "${NC}"

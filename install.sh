@@ -22,14 +22,15 @@ if [[ $EUID -eq 0 ]]; then
 fi
 
 INSTALL_PATH="${1:-$HOME/.local/bin}"
+REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 printf "%bInstalling markitdown-wrapper to %s%b\n" "${BLUE}" "${INSTALL_PATH}" "${NC}"
 
 # Create directory if it doesn't exist
 mkdir -p "$INSTALL_PATH"
 
-# Copy script
-cp "$(dirname "$0")/markitdown-wrapper.sh" "$INSTALL_PATH/markitdown"
+# Copy script and embed the repo path so markitdown -u can find it later
+sed "s|MARKITDOWN_REPO_PATH=\"\"|MARKITDOWN_REPO_PATH=\"${REPO_DIR}\"|" "${REPO_DIR}/markitdown-wrapper.sh" > "$INSTALL_PATH/markitdown"
 chmod 700 "$INSTALL_PATH/markitdown"
 
 printf "%bInstallation complete!%b\n" "${GREEN}" "${NC}"
