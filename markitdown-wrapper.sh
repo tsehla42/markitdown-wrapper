@@ -207,12 +207,16 @@ if [ "$VERBOSE" = true ]; then
     printf "%bExecuting: %s < \"%s\" > \"%s\"%b\n" "${YELLOW}" "${DOCKER_CMD}" "${INPUT_ABS}" "${OUTPUT_ABS}" "${NC}"
 fi
 
+START_MS=$(date +%s%3N)
 if eval "${DOCKER_CMD}" < "$INPUT_ABS" > "$OUTPUT_ABS"; then
+    END_MS=$(date +%s%3N)
+    ELAPSED_MS=$(( END_MS - START_MS ))
     FILE_SIZE=$(wc -c < "$OUTPUT_ABS")
     LINE_COUNT=$(wc -l < "$OUTPUT_ABS")
     printf "%bConversion successful!%b\n" "${GREEN}" "${NC}"
-    printf "Size: %b%s%b\n" "${BLUE}" "$(numfmt --to=iec-i --suffix=B $FILE_SIZE 2>/dev/null || echo "${FILE_SIZE} bytes")" "${NC}"
+    printf "Size:  %b%s%b\n" "${BLUE}" "$(numfmt --to=iec-i --suffix=B $FILE_SIZE 2>/dev/null || echo "${FILE_SIZE} bytes")" "${NC}"
     printf "Lines: %b%s%b\n" "${BLUE}" "${LINE_COUNT}" "${NC}"
+    printf "Time:  %b%d.%03ds%b\n" "${BLUE}" "$(( ELAPSED_MS / 1000 ))" "$(( ELAPSED_MS % 1000 ))" "${NC}"
 else
     printf "%bConversion failed!%b\n" "${RED}" "${NC}"
     [ -f "$OUTPUT_ABS" ] && rm -f "$OUTPUT_ABS"
